@@ -131,7 +131,7 @@ public class TranscriptionService: ObservableObject {
     /// The engines `ensureEngineLoaded` can build. Named apart from the classes so the choice can
     /// be made, and tested, without instantiating anything (an engine's init may load a model).
     enum EngineKind: Equatable {
-        case whisper, fluidAudio, senseVoice, remote, appleSpeech
+        case whisper, fluidAudio, senseVoice, remote, appleSpeech, xai, gemini, groq
     }
 
     /// Which engine a stored `selectedEngine` id gets. Every id the app does not know lands on
@@ -154,6 +154,12 @@ public class TranscriptionService: ObservableObject {
             return senseVoiceAvailable ? .senseVoice : .whisper
         case "remote":
             return .remote
+        case "xai":
+            return .xai
+        case "gemini":
+            return .gemini
+        case "groq":
+            return .groq
         case "apple":
             // A pref synced from a newer machine; the catalog never offers "apple" there, so
             // quietly fall back.
@@ -178,6 +184,12 @@ public class TranscriptionService: ObservableObject {
 #endif
         case .remote:
             return RemoteEngine()
+        case .xai:
+            return XAIEngine()
+        case .gemini:
+            return GeminiTranscriptionEngine()
+        case .groq:
+            return GroqEngine()
         case .appleSpeech:
 #if canImport(FoundationModels)
             if #available(macOS 26.0, iOS 26.0, *) {
@@ -245,11 +257,18 @@ public class TranscriptionService: ObservableObject {
         let previousFluid = prefs.fluidAudioModelVersion
         let previousRemote = prefs.remoteServerModel
 
+        let previousXAI = prefs.xaiModel
+        let previousGemini = prefs.geminiModel
+        let previousGroq = prefs.cloudGroqModel
+
         prefs.selectedEngine = option.engine
         switch option.engine {
         case "whisper": prefs.selectedWhisperModelPath = option.identifier
         case "fluidaudio": prefs.fluidAudioModelVersion = option.identifier
         case "remote": prefs.remoteServerModel = option.identifier
+        case "xai": prefs.xaiModel = option.identifier
+        case "gemini": prefs.geminiModel = option.identifier
+        case "groq": prefs.cloudGroqModel = option.identifier
         default: break
         }
         reloadEngine()
@@ -259,6 +278,9 @@ public class TranscriptionService: ObservableObject {
             prefs.selectedWhisperModelPath = previousWhisper
             prefs.fluidAudioModelVersion = previousFluid
             prefs.remoteServerModel = previousRemote
+            prefs.xaiModel = previousXAI
+            prefs.geminiModel = previousGemini
+            prefs.cloudGroqModel = previousGroq
             self.reloadEngine()
         }
     }
@@ -354,6 +376,8 @@ public class TranscriptionService: ObservableObject {
         do {
             return try await runOnEngine(engine, url: url, settings: settings)
         } catch let error where fallbackModel == nil && Self.shouldUseFallback(for: error) {
+            // Local fallback is Remote-only. xAI / Gemini never auto-reroute audio to
+            // another cloud provider or to a local model unless the user configured Remote.
             guard CoreAccess.preferences.remoteFallbackEnabled,
                   CoreAccess.preferences.selectedEngine == "remote",
                   let fallback = CoreAccess.preferences.remoteFallbackModel else {
@@ -384,6 +408,27 @@ public class TranscriptionService: ObservableObject {
             }
         } else if let remoteEngine = engine as? RemoteEngine {
             remoteEngine.onProgressUpdate = { [weak self] newProgress in
+                Task { @MainActor in
+                    guard let self = self, !self.isCancelled else { return }
+                    self.progress = newProgress
+                }
+            }
+        } else if let xaiEngine = engine as? XAIEngine {
+            xaiEngine.onProgressUpdate = { [weak self] newProgress in
+                Task { @MainActor in
+                    guard let self = self, !self.isCancelled else { return }
+                    self.progress = newProgress
+                }
+            }
+        } else if let geminiEngine = engine as? GeminiTranscriptionEngine {
+            geminiEngine.onProgressUpdate = { [weak self] newProgress in
+                Task { @MainActor in
+                    guard let self = self, !self.isCancelled else { return }
+                    self.progress = newProgress
+                }
+            }
+        } else if let groqEngine = engine as? GroqEngine {
+            groqEngine.onProgressUpdate = { [weak self] newProgress in
                 Task { @MainActor in
                     guard let self = self, !self.isCancelled else { return }
                     self.progress = newProgress

@@ -43,6 +43,21 @@ final class ModelCatalogActiveOptionTests: CoreTestCase {
         prefs.remoteServerModel = "  whisper-1 \n"
         XCTAssertEqual(ModelCatalog.activeOption(),
                        DictationModelOption(engine: "remote", identifier: "whisper-1", displayName: "whisper-1"))
+
+        prefs.selectedEngine = "xai"
+        prefs.xaiModel = "grok-voice-transcribe-2.0"
+        XCTAssertEqual(ModelCatalog.activeOption()?.engine, "xai")
+        XCTAssertEqual(ModelCatalog.activeOption()?.identifier, "grok-voice-transcribe-2.0")
+
+        prefs.selectedEngine = "gemini"
+        prefs.geminiModel = "gemini-2.5-flash"
+        XCTAssertEqual(ModelCatalog.activeOption()?.engine, "gemini")
+        XCTAssertEqual(ModelCatalog.activeOption()?.identifier, "gemini-2.5-flash")
+
+        prefs.selectedEngine = "groq"
+        prefs.cloudGroqModel = "whisper-large-v3-turbo"
+        XCTAssertEqual(ModelCatalog.activeOption()?.engine, "groq")
+        XCTAssertEqual(ModelCatalog.activeOption()?.identifier, "whisper-large-v3-turbo")
     }
 
     func testARemoteServerWithoutAModelHasNoOption() {
@@ -52,7 +67,7 @@ final class ModelCatalogActiveOptionTests: CoreTestCase {
     }
 
     func testAnUnknownEngineHasNoOption() {
-        prefs.selectedEngine = "groq"
+        prefs.selectedEngine = "legacy-unknown-engine"
         XCTAssertNil(ModelCatalog.activeOption())
     }
 }

@@ -3,7 +3,7 @@ import OpenSuperWhisperCore
 
 /// The families a regeneration model can belong to, in the order the picker groups them.
 enum RegenerationModelFamily: CaseIterable {
-    case parakeet, whisper, senseVoice, appleSpeech, remote
+    case parakeet, whisper, senseVoice, appleSpeech, remote, groq, xai, gemini
 }
 
 struct RegenerationModel: Equatable {
@@ -22,8 +22,16 @@ enum RegenerationModels {
         var senseVoice: [DictationModelOption] = []
         var appleSpeech: [DictationModelOption] = []
         var remote: [DictationModelOption] = []
+        var groq: [DictationModelOption] = []
+        var xai: [DictationModelOption] = []
+        var gemini: [DictationModelOption] = []
         /// A remote server URL is set. Without one the cached model list is a leftover.
         var remoteConfigured = false
+        /// Cloud providers only appear when their Keychain API key is present — otherwise a
+        /// regeneration pick would fail immediately with missingAPIKey.
+        var groqConfigured = false
+        var xaiConfigured = false
+        var geminiConfigured = false
     }
 
     static func usable(_ candidates: Candidates) -> [RegenerationModel] {
@@ -36,6 +44,9 @@ enum RegenerationModels {
             (.senseVoice, candidates.senseVoice),
             (.appleSpeech, candidates.appleSpeech),
             (.remote, remote),
+            (.groq, candidates.groqConfigured ? candidates.groq : []),
+            (.xai, candidates.xaiConfigured ? candidates.xai : []),
+            (.gemini, candidates.geminiConfigured ? candidates.gemini : []),
         ]
         return byFamily.flatMap { family, options in
             options.map { RegenerationModel(family: family, option: $0) }
@@ -50,7 +61,13 @@ enum RegenerationModels {
             senseVoice: ModelCatalog.senseVoiceModels(),
             appleSpeech: ModelCatalog.appleSpeechModels(forLanguage: prefs.whisperLanguage),
             remote: ModelCatalog.remoteModels(),
-            remoteConfigured: !prefs.remoteServerURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            groq: ModelCatalog.groqModels(),
+            xai: ModelCatalog.xaiModels(),
+            gemini: ModelCatalog.geminiModels(),
+            remoteConfigured: !prefs.remoteServerURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            groqConfigured: !(prefs.cloudGroqAPIKey ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            xaiConfigured: !(prefs.xaiAPIKey ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            geminiConfigured: !(prefs.geminiAPIKey ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         ))
     }
 }

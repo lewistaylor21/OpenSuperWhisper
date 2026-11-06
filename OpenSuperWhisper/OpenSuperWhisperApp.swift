@@ -639,11 +639,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, ObservableOb
         submenu.removeAllItems()
 
         let active = ModelCatalog.activeOption()
+        let prefs = AppPreferences.shared
+        let groqReady = !(prefs.cloudGroqAPIKey ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let xaiReady = !(prefs.xaiAPIKey ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let geminiReady = !(prefs.geminiAPIKey ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let groups: [(label: String, options: [DictationModelOption])] = [
             ("Whisper", ModelCatalog.whisperModels()),
             ("Parakeet", ModelCatalog.parakeetModels()),
             ("SenseVoice", ModelCatalog.senseVoiceModels()),
             ("Remote", ModelCatalog.remoteModels()),
+            ("Groq", groqReady ? ModelCatalog.groqModels() : []),
+            ("Grok", xaiReady ? ModelCatalog.xaiModels() : []),
+            ("Gemini", geminiReady ? ModelCatalog.geminiModels() : []),
         ]
 
         var addedAnything = false

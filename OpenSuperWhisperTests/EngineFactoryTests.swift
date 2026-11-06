@@ -23,6 +23,9 @@ final class EngineFactoryTests: XCTestCase {
         XCTAssertEqual(kind("fluidaudio"), .fluidAudio)
         XCTAssertEqual(kind("sensevoice"), .senseVoice)
         XCTAssertEqual(kind("remote"), .remote)
+        XCTAssertEqual(kind("xai"), .xai)
+        XCTAssertEqual(kind("gemini"), .gemini)
+        XCTAssertEqual(kind("groq"), .groq)
         XCTAssertEqual(kind("apple"), .appleSpeech)
     }
 
@@ -38,17 +41,15 @@ final class EngineFactoryTests: XCTestCase {
 
     /// The gates only affect their own engine.
     func testGatesDoNotTouchOtherIds() {
-        for id in ["whisper", "fluidaudio", "remote"] {
+        for id in ["whisper", "fluidaudio", "remote", "xai", "gemini", "groq"] {
             XCTAssertEqual(kind(id, senseVoice: false, appleSpeech: false), kind(id), id)
         }
     }
 
-    /// Anything else falls back to Whisper instead of failing to load, including the Groq id
-    /// that predates the remote engine. AppPreferences rewrites "groq" to "remote" when it is
-    /// built, so a "groq" written after that (a restored backup, say) gets Whisper, not the
-    /// remote engine, until the next launch. Pinned as it is.
-    func testUnknownAndLegacyIdsFallBackToWhisper() {
-        for id in ["groq", "", "Whisper", "WHISPER", "parakeet", "sense-voice", " whisper"] {
+    /// Unknown ids fall back to Whisper. `"groq"` is again a first-party cloud engine
+    /// (after a one-shot legacy→Remote migration flag).
+    func testUnknownIdsFallBackToWhisper() {
+        for id in ["", "Whisper", "WHISPER", "parakeet", "sense-voice", " whisper"] {
             XCTAssertEqual(kind(id), .whisper, "'\(id)'")
         }
     }
@@ -85,6 +86,12 @@ final class EngineFactoryTests: XCTestCase {
         XCTAssertTrue(fluid is FluidAudioEngine)
         let remote = await TranscriptionService.buildEngine(.remote)
         XCTAssertTrue(remote is RemoteEngine)
+        let xai = await TranscriptionService.buildEngine(.xai)
+        XCTAssertTrue(xai is XAIEngine)
+        let gemini = await TranscriptionService.buildEngine(.gemini)
+        XCTAssertTrue(gemini is GeminiTranscriptionEngine)
+        let groq = await TranscriptionService.buildEngine(.groq)
+        XCTAssertTrue(groq is GroqEngine)
 #if arch(arm64)
         let senseVoice = await TranscriptionService.buildEngine(.senseVoice)
         XCTAssertTrue(senseVoice is SenseVoiceEngine)

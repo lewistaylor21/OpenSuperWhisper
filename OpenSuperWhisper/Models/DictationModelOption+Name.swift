@@ -13,6 +13,12 @@ extension DictationModelOption {
             let file = URL(fileURLWithPath: identifier).lastPathComponent
             return SettingsDownloadableModels.availableModels.first { $0.filename == file }.map { "Whisper \($0.name)" }
                 ?? displayName
+        case "groq":
+            return "Groq Whisper Turbo"
+        case "xai":
+            return "Grok Voice Transcribe"
+        case "gemini":
+            return identifier.lowercased().contains("transcribe") ? "Gemini Transcribe" : "Gemini \(identifier)"
         default:
             return displayName
         }

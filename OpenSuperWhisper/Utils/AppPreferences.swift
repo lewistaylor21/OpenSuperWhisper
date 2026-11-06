@@ -125,12 +125,18 @@ final class AppPreferences {
         }
     }
 
-    /// The standalone Groq engine was folded into the generic remote (OpenAI-compatible)
-    /// engine: Groq is now just a preset that points the remote engine at Groq's API. Migrate
-    /// existing Groq users once so their engine keeps working with no re-entry — seed the remote
-    /// config from their stored Groq URL/model/key and flip `selectedEngine` from "groq" to
-    /// "remote". Idempotent: only runs while `selectedEngine` is still "groq".
+    /// One-shot: the pre-Remote standalone Groq engine id (`selectedEngine == "groq"`) was
+    /// folded into Remote. After that migration ran, `"groq"` is again a real first-party
+    /// cloud engine id (Groq Whisper via api.groq.com) — so this must not re-run every launch.
+    @UserDefault(key: "didMigrateLegacyGroqToRemote", defaultValue: false)
+    var didMigrateLegacyGroqToRemote: Bool
+
+    /// Migrate existing Groq users once so their engine keeps working with no re-entry — seed
+    /// the remote config from their stored Groq URL/model/key and flip `selectedEngine` from
+    /// "groq" to "remote". After the flag is set, `"groq"` means the first-party Groq cloud card.
     private func migrateGroqToRemote() {
+        if didMigrateLegacyGroqToRemote { return }
+        defer { didMigrateLegacyGroqToRemote = true }
         guard selectedEngine == "groq" else { return }
         if remoteServerURL.isEmpty {
             remoteServerURL = "https://api.groq.com/openai/v1"
@@ -257,6 +263,67 @@ final class AppPreferences {
             remoteFallbackModelData = newValue.flatMap { try? JSONEncoder().encode($0) } ?? Data()
         }
     }
+
+    // MARK: - xAI Grok Voice Transcribe (official /v1/stt)
+    // Separate from Remote: xAI STT is not OpenAI `/audio/transcriptions`.
+    // API key is Keychain-backed. Speech usage is billed by xAI separately from SuperGrok.
+
+    /// xAI personal API key — Keychain only, never UserDefaults.
+    var xaiAPIKey: String? {
+        get { Keychain.read("xaiAPIKey") }
+        set { Keychain.set(newValue, for: "xaiAPIKey") }
+    }
+
+    @UserDefault(key: "xaiModel", defaultValue: "grok-voice-transcribe-2.0")
+    var xaiModel: String
+
+    @UserDefault(key: "xaiFormatEnabled", defaultValue: true)
+    var xaiFormatEnabled: Bool
+
+    @UserDefault(key: "xaiTimeoutEnabled", defaultValue: true)
+    var xaiTimeoutEnabled: Bool
+
+    @UserDefault(key: "xaiTimeoutSeconds", defaultValue: 60.0)
+    var xaiTimeoutSeconds: Double
+
+    // MARK: - Gemini generateContent audio transcription
+    // Native Gemini API (not Google Cloud Speech-to-Text, not OpenAI-compatible Remote).
+    // Default model is dedicated `gemini-3.5-transcribe`; model id is user-configurable
+    // (e.g. `gemini-2.5-flash` for multimodal ASR). Token-billed by Google.
+
+    /// Gemini API key — Keychain only, separate from the xAI and Remote keys.
+    var geminiAPIKey: String? {
+        get { Keychain.read("geminiAPIKey") }
+        set { Keychain.set(newValue, for: "geminiAPIKey") }
+    }
+
+    @UserDefault(key: "geminiModel", defaultValue: "gemini-3.5-transcribe")
+    var geminiModel: String
+
+    @UserDefault(key: "geminiTimeoutEnabled", defaultValue: true)
+    var geminiTimeoutEnabled: Bool
+
+    @UserDefault(key: "geminiTimeoutSeconds", defaultValue: 60.0)
+    var geminiTimeoutSeconds: Double
+
+    // MARK: - First-party Groq cloud STT (api.groq.com)
+    // OpenAI-compatible `/audio/transcriptions`, default `whisper-large-v3-turbo`.
+    // Keychain account is `cloudGroqAPIKey` — separate from legacy `groqAPIKey` and from
+    // `remoteServerAPIKey` (generic Remote / Server card).
+
+    var cloudGroqAPIKey: String? {
+        get { Keychain.read("cloudGroqAPIKey") }
+        set { Keychain.set(newValue, for: "cloudGroqAPIKey") }
+    }
+
+    @UserDefault(key: "cloudGroqModel", defaultValue: "whisper-large-v3-turbo")
+    var cloudGroqModel: String
+
+    @UserDefault(key: "cloudGroqTimeoutEnabled", defaultValue: true)
+    var cloudGroqTimeoutEnabled: Bool
+
+    @UserDefault(key: "cloudGroqTimeoutSeconds", defaultValue: 60.0)
+    var cloudGroqTimeoutSeconds: Double
 
     // Model settings
     var selectedModelPath: String? {
