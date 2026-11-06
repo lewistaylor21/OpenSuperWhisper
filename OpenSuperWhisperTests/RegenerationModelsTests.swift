@@ -39,12 +39,33 @@ final class RegenerationModelsTests: XCTestCase {
             senseVoice: [option("sensevoice", "default")],
             appleSpeech: [option("apple", "default")],
             remote: [option("remote", "whisper-1")],
-            remoteConfigured: true))
+            xai: [option("xai", "grok-voice-transcribe-2.0")],
+            gemini: [option("gemini", "gemini-3.5-transcribe")],
+            remoteConfigured: true,
+            xaiConfigured: true,
+            geminiConfigured: true))
 
         XCTAssertEqual(models.map(\.family),
-                       [.parakeet, .whisper, .whisper, .senseVoice, .appleSpeech, .remote])
+                       [.parakeet, .whisper, .whisper, .senseVoice, .appleSpeech, .remote, .xai, .gemini])
         XCTAssertEqual(models.map(\.option.identifier),
-                       ["v3", "/models/ggml-base.bin", "/models/ggml-small.bin", "default", "default", "whisper-1"])
+                       ["v3", "/models/ggml-base.bin", "/models/ggml-small.bin", "default", "default",
+                        "whisper-1", "grok-voice-transcribe-2.0", "gemini-3.5-transcribe"])
+    }
+
+    func testCloudFamiliesRequireConfiguredKeys() {
+        let withoutKeys = RegenerationModels.usable(.init(
+            xai: [option("xai", "grok-voice-transcribe-2.0")],
+            gemini: [option("gemini", "gemini-3.5-transcribe")],
+            xaiConfigured: false,
+            geminiConfigured: false))
+        XCTAssertTrue(withoutKeys.isEmpty)
+
+        let withKeys = RegenerationModels.usable(.init(
+            xai: [option("xai", "grok-voice-transcribe-2.0")],
+            gemini: [option("gemini", "gemini-3.5-transcribe")],
+            xaiConfigured: true,
+            geminiConfigured: true))
+        XCTAssertEqual(withKeys.map(\.family), [.xai, .gemini])
     }
 
     func testAppleSpeechNeedsItsAssetsForTheLanguage() {

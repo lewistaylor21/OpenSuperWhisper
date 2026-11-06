@@ -111,6 +111,88 @@ class SettingsViewModel: ObservableObject {
         }
     }
 
+    // MARK: - xAI Grok Voice Transcribe
+
+    @Published var xaiAPIKey: String {
+        didSet {
+            AppPreferences.shared.xaiAPIKey = xaiAPIKey
+            reloadCloudEngineIfSelected("xai")
+        }
+    }
+
+    @Published var xaiModel: String {
+        didSet {
+            guard !isSyncing else { return }
+            AppPreferences.shared.xaiModel = xaiModel
+            reloadCloudEngineIfSelected("xai")
+            if selectedEngine == "xai" {
+                MainActor.assumeIsolated { ModelSelectionStore.shared.refresh() }
+            }
+        }
+    }
+
+    @Published var xaiFormatEnabled: Bool {
+        didSet {
+            AppPreferences.shared.xaiFormatEnabled = xaiFormatEnabled
+            reloadCloudEngineIfSelected("xai")
+        }
+    }
+
+    @Published var xaiTimeoutEnabled: Bool {
+        didSet {
+            AppPreferences.shared.xaiTimeoutEnabled = xaiTimeoutEnabled
+            reloadCloudEngineIfSelected("xai")
+        }
+    }
+
+    @Published var xaiTimeoutSeconds: Double {
+        didSet {
+            AppPreferences.shared.xaiTimeoutSeconds = xaiTimeoutSeconds
+            reloadCloudEngineIfSelected("xai")
+        }
+    }
+
+    // MARK: - Gemini generateContent transcription
+
+    @Published var geminiAPIKey: String {
+        didSet {
+            AppPreferences.shared.geminiAPIKey = geminiAPIKey
+            reloadCloudEngineIfSelected("gemini")
+        }
+    }
+
+    @Published var geminiModel: String {
+        didSet {
+            guard !isSyncing else { return }
+            AppPreferences.shared.geminiModel = geminiModel
+            reloadCloudEngineIfSelected("gemini")
+            if selectedEngine == "gemini" {
+                MainActor.assumeIsolated { ModelSelectionStore.shared.refresh() }
+            }
+        }
+    }
+
+    @Published var geminiTimeoutEnabled: Bool {
+        didSet {
+            AppPreferences.shared.geminiTimeoutEnabled = geminiTimeoutEnabled
+            reloadCloudEngineIfSelected("gemini")
+        }
+    }
+
+    @Published var geminiTimeoutSeconds: Double {
+        didSet {
+            AppPreferences.shared.geminiTimeoutSeconds = geminiTimeoutSeconds
+            reloadCloudEngineIfSelected("gemini")
+        }
+    }
+
+    private func reloadCloudEngineIfSelected(_ engine: String) {
+        guard selectedEngine == engine else { return }
+        Task { @MainActor in
+            TranscriptionService.shared.reloadEngine()
+        }
+    }
+
     /// User-initiated model selections. Each routes through the single mutation point —
     /// `ModelSelectionStore.select` — so the menu bar, Settings, and the context rules all change
     /// the active model the same way and can't drift. The store persists to AppPreferences,
@@ -156,6 +238,21 @@ class SettingsViewModel: ObservableObject {
         MainActor.assumeIsolated {
             ModelSelectionStore.shared.select(DictationModelOption(
                 engine: "apple", identifier: "default", displayName: "Apple Speech"))
+        }
+    }
+
+    func selectXAI(_ id: String) {
+        MainActor.assumeIsolated {
+            ModelSelectionStore.shared.select(DictationModelOption(
+                engine: "xai", identifier: id, displayName: "Grok Voice Transcribe"))
+        }
+    }
+
+    func selectGemini(_ id: String) {
+        MainActor.assumeIsolated {
+            let name = id.lowercased().contains("transcribe") ? "Gemini Transcribe" : id
+            ModelSelectionStore.shared.select(DictationModelOption(
+                engine: "gemini", identifier: id, displayName: name))
         }
     }
 
@@ -1062,6 +1159,15 @@ class SettingsViewModel: ObservableObject {
         self.remoteServerAPIKey = prefs.remoteServerAPIKey ?? ""
         self.remoteServerTimeoutEnabled = prefs.remoteServerTimeoutEnabled
         self.remoteServerTimeoutSeconds = prefs.remoteServerTimeoutSeconds
+        self.xaiAPIKey = prefs.xaiAPIKey ?? ""
+        self.xaiModel = prefs.xaiModel
+        self.xaiFormatEnabled = prefs.xaiFormatEnabled
+        self.xaiTimeoutEnabled = prefs.xaiTimeoutEnabled
+        self.xaiTimeoutSeconds = prefs.xaiTimeoutSeconds
+        self.geminiAPIKey = prefs.geminiAPIKey ?? ""
+        self.geminiModel = prefs.geminiModel
+        self.geminiTimeoutEnabled = prefs.geminiTimeoutEnabled
+        self.geminiTimeoutSeconds = prefs.geminiTimeoutSeconds
         self.contextAwareModelMode = prefs.contextAwareModelMode
         self.selectedLanguage = prefs.whisperLanguage
         self.translateToEnglish = prefs.translateToEnglish
@@ -1209,12 +1315,16 @@ class SettingsViewModel: ObservableObject {
         guard selectedEngine != prefs.selectedEngine
             || fluidAudioModelVersion != prefs.fluidAudioModelVersion
             || remoteServerModel != prefs.remoteServerModel
+            || xaiModel != prefs.xaiModel
+            || geminiModel != prefs.geminiModel
             || selectedModelURL != newURL else { return }
 
         isSyncing = true
         selectedEngine = prefs.selectedEngine
         fluidAudioModelVersion = prefs.fluidAudioModelVersion
         remoteServerModel = prefs.remoteServerModel
+        xaiModel = prefs.xaiModel
+        geminiModel = prefs.geminiModel
         selectedModelURL = newURL
         isSyncing = false
 

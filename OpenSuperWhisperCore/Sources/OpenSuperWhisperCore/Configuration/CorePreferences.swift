@@ -27,6 +27,19 @@ public protocol CorePreferences: AnyObject, Sendable {
     var remoteFallbackEnabled: Bool { get }
     var remoteFallbackModel: DictationModelOption? { get }
 
+    // xAI Grok Voice Transcribe (official /v1/stt — not OpenAI-compatible Remote)
+    var xaiAPIKey: String? { get }
+    var xaiModel: String { get set }
+    var xaiFormatEnabled: Bool { get }
+    var xaiTimeoutEnabled: Bool { get }
+    var xaiTimeoutSeconds: Double { get }
+
+    // Gemini generateContent audio transcription (not Google Cloud Speech-to-Text)
+    var geminiAPIKey: String? { get }
+    var geminiModel: String { get set }
+    var geminiTimeoutEnabled: Bool { get }
+    var geminiTimeoutSeconds: Double { get }
+
     // History and retention
     var saveTranscriptionHistory: Bool { get set }
     var retentionMaxCountEnabled: Bool { get }

@@ -29,6 +29,17 @@ final class TestPreferences: CorePreferences, @unchecked Sendable {
         var remoteFallbackEnabled = false
         var remoteFallbackModel: DictationModelOption?
 
+        var xaiAPIKey: String?
+        var xaiModel = XAIEngine.defaultModel
+        var xaiFormatEnabled = true
+        var xaiTimeoutEnabled = true
+        var xaiTimeoutSeconds: Double = 60
+
+        var geminiAPIKey: String?
+        var geminiModel = GeminiTranscriptionEngine.defaultModel
+        var geminiTimeoutEnabled = true
+        var geminiTimeoutSeconds: Double = 60
+
         var saveTranscriptionHistory = true
         var retentionMaxCountEnabled = false
         var retentionMaxCount = 100
@@ -130,6 +141,44 @@ final class TestPreferences: CorePreferences, @unchecked Sendable {
     var remoteFallbackModel: DictationModelOption? {
         get { self[\.remoteFallbackModel] }
         set { self[\.remoteFallbackModel] = newValue }
+    }
+
+    var xaiAPIKey: String? {
+        get { self[\.xaiAPIKey] }
+        set { self[\.xaiAPIKey] = newValue }
+    }
+    var xaiModel: String {
+        get { self[\.xaiModel] }
+        set { self[\.xaiModel] = newValue }
+    }
+    var xaiFormatEnabled: Bool {
+        get { self[\.xaiFormatEnabled] }
+        set { self[\.xaiFormatEnabled] = newValue }
+    }
+    var xaiTimeoutEnabled: Bool {
+        get { self[\.xaiTimeoutEnabled] }
+        set { self[\.xaiTimeoutEnabled] = newValue }
+    }
+    var xaiTimeoutSeconds: Double {
+        get { self[\.xaiTimeoutSeconds] }
+        set { self[\.xaiTimeoutSeconds] = newValue }
+    }
+
+    var geminiAPIKey: String? {
+        get { self[\.geminiAPIKey] }
+        set { self[\.geminiAPIKey] = newValue }
+    }
+    var geminiModel: String {
+        get { self[\.geminiModel] }
+        set { self[\.geminiModel] = newValue }
+    }
+    var geminiTimeoutEnabled: Bool {
+        get { self[\.geminiTimeoutEnabled] }
+        set { self[\.geminiTimeoutEnabled] = newValue }
+    }
+    var geminiTimeoutSeconds: Double {
+        get { self[\.geminiTimeoutSeconds] }
+        set { self[\.geminiTimeoutSeconds] = newValue }
     }
 
     var saveTranscriptionHistory: Bool {

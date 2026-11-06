@@ -23,6 +23,8 @@ final class EngineFactoryTests: XCTestCase {
         XCTAssertEqual(kind("fluidaudio"), .fluidAudio)
         XCTAssertEqual(kind("sensevoice"), .senseVoice)
         XCTAssertEqual(kind("remote"), .remote)
+        XCTAssertEqual(kind("xai"), .xai)
+        XCTAssertEqual(kind("gemini"), .gemini)
         XCTAssertEqual(kind("apple"), .appleSpeech)
     }
 
@@ -38,7 +40,7 @@ final class EngineFactoryTests: XCTestCase {
 
     /// The gates only affect their own engine.
     func testGatesDoNotTouchOtherIds() {
-        for id in ["whisper", "fluidaudio", "remote"] {
+        for id in ["whisper", "fluidaudio", "remote", "xai", "gemini"] {
             XCTAssertEqual(kind(id, senseVoice: false, appleSpeech: false), kind(id), id)
         }
     }
@@ -85,6 +87,10 @@ final class EngineFactoryTests: XCTestCase {
         XCTAssertTrue(fluid is FluidAudioEngine)
         let remote = await TranscriptionService.buildEngine(.remote)
         XCTAssertTrue(remote is RemoteEngine)
+        let xai = await TranscriptionService.buildEngine(.xai)
+        XCTAssertTrue(xai is XAIEngine)
+        let gemini = await TranscriptionService.buildEngine(.gemini)
+        XCTAssertTrue(gemini is GeminiTranscriptionEngine)
 #if arch(arm64)
         let senseVoice = await TranscriptionService.buildEngine(.senseVoice)
         XCTAssertTrue(senseVoice is SenseVoiceEngine)

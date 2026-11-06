@@ -105,6 +105,8 @@ struct RegeneratePanel: View {
             case .senseVoice: Text(verbatim: "SenseVoice")
             case .appleSpeech: Text(verbatim: "Apple Speech")
             case .remote: Text("Server")
+            case .xai: Text(verbatim: "Grok")
+            case .gemini: Text(verbatim: "Gemini")
             }
         }
         .scaledFont(size: 11, weight: .bold)

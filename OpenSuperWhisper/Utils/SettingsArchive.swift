@@ -86,6 +86,9 @@ enum SettingsArchive {
         "unloadWhisperModelWhenIdle", "useAsianAutocorrect", "useBeamSearch",
         "useSurroundingTextAsContext", "whisperLanguage", "writingStyleID", "customWritingStylesData",
         "appWritingStyles", "perAppDisabledBundleIDs", "appCleanupOverrides",
+        // Cloud STT engines (API keys stay in Keychain — never archived)
+        "geminiModel", "geminiTimeoutEnabled", "geminiTimeoutSeconds",
+        "xaiFormatEnabled", "xaiModel", "xaiTimeoutEnabled", "xaiTimeoutSeconds",
     ]
 
     /// The portable preferences set in `defaults`, as the file's bytes. Keys left at their

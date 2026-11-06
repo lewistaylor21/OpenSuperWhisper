@@ -258,6 +258,48 @@ final class AppPreferences {
         }
     }
 
+    // MARK: - xAI Grok Voice Transcribe (official /v1/stt)
+    // Separate from Remote: xAI STT is not OpenAI `/audio/transcriptions`.
+    // API key is Keychain-backed. Speech usage is billed by xAI separately from SuperGrok.
+
+    /// xAI personal API key — Keychain only, never UserDefaults.
+    var xaiAPIKey: String? {
+        get { Keychain.read("xaiAPIKey") }
+        set { Keychain.set(newValue, for: "xaiAPIKey") }
+    }
+
+    @UserDefault(key: "xaiModel", defaultValue: "grok-voice-transcribe-2.0")
+    var xaiModel: String
+
+    @UserDefault(key: "xaiFormatEnabled", defaultValue: true)
+    var xaiFormatEnabled: Bool
+
+    @UserDefault(key: "xaiTimeoutEnabled", defaultValue: true)
+    var xaiTimeoutEnabled: Bool
+
+    @UserDefault(key: "xaiTimeoutSeconds", defaultValue: 60.0)
+    var xaiTimeoutSeconds: Double
+
+    // MARK: - Gemini generateContent audio transcription
+    // Native Gemini API (not Google Cloud Speech-to-Text, not OpenAI-compatible Remote).
+    // Default model is dedicated `gemini-3.5-transcribe`; model id is user-configurable
+    // (e.g. `gemini-2.5-flash` for multimodal ASR). Token-billed by Google.
+
+    /// Gemini API key — Keychain only, separate from the xAI and Remote keys.
+    var geminiAPIKey: String? {
+        get { Keychain.read("geminiAPIKey") }
+        set { Keychain.set(newValue, for: "geminiAPIKey") }
+    }
+
+    @UserDefault(key: "geminiModel", defaultValue: "gemini-3.5-transcribe")
+    var geminiModel: String
+
+    @UserDefault(key: "geminiTimeoutEnabled", defaultValue: true)
+    var geminiTimeoutEnabled: Bool
+
+    @UserDefault(key: "geminiTimeoutSeconds", defaultValue: 60.0)
+    var geminiTimeoutSeconds: Double
+
     // Model settings
     var selectedModelPath: String? {
         get {

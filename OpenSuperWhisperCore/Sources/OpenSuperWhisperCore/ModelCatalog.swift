@@ -58,6 +58,29 @@ public enum ModelCatalog {
         }
     }
 
+    /// xAI Grok Voice Transcribe — one official STT model (configurable id kept for forward compat).
+    public static func xaiModels() -> [DictationModelOption] {
+        let id = {
+            let configured = CoreAccess.preferences.xaiModel
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return configured.isEmpty ? XAIEngine.defaultModel : configured
+        }()
+        return [DictationModelOption(engine: "xai", identifier: id, displayName: "Grok Voice Transcribe")]
+    }
+
+    /// Gemini generateContent audio transcription — dedicated STT or multimodal Flash.
+    public static func geminiModels() -> [DictationModelOption] {
+        let id = {
+            let configured = CoreAccess.preferences.geminiModel
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return configured.isEmpty ? GeminiTranscriptionEngine.defaultModel : configured
+        }()
+        let name = GeminiTranscriptionEngine.usesDedicatedTranscriptionAPI(id)
+            ? "Gemini Transcribe"
+            : id
+        return [DictationModelOption(engine: "gemini", identifier: id, displayName: name)]
+    }
+
     /// The system speech model (macOS 26+) — one entry, only when the OS supports it
     /// AND at least one locale's assets are already installed (the cached check keeps
     /// the never-download-from-the-menu rule).
@@ -77,7 +100,8 @@ public enum ModelCatalog {
     /// Every usable model across engines. Used to decide whether switching is
     /// even meaningful (one model → nothing to choose).
     public static func allAvailable() -> [DictationModelOption] {
-        whisperModels() + parakeetModels() + senseVoiceModels() + appleSpeechModels() + remoteModels()
+        whisperModels() + parakeetModels() + senseVoiceModels() + appleSpeechModels()
+            + remoteModels() + xaiModels() + geminiModels()
     }
 
     /// The model currently in effect (active engine + its selected model).
@@ -106,6 +130,10 @@ public enum ModelCatalog {
             return id.isEmpty
                 ? nil
                 : DictationModelOption(engine: "remote", identifier: id, displayName: id)
+        case "xai":
+            return xaiModels().first
+        case "gemini":
+            return geminiModels().first
         default:
             return nil
         }
@@ -123,6 +151,10 @@ public enum ModelCatalog {
             prefs.fluidAudioModelVersion = option.identifier
         case "remote":
             prefs.remoteServerModel = option.identifier
+        case "xai":
+            prefs.xaiModel = option.identifier
+        case "gemini":
+            prefs.geminiModel = option.identifier
         case "sensevoice", "apple":
             break  // single model, nothing else to set
         default:

@@ -63,6 +63,9 @@ final class DefaultsKeySnapshotTests: XCTestCase {
         "feedbackPromptLaunches",
         "fillerWordsPattern",
         "fluidAudioModelVersion",
+        "geminiModel",
+        "geminiTimeoutEnabled",
+        "geminiTimeoutSeconds",
         "glassBubbleSize",
         "groqModel",
         "hasCompletedOnboarding",
@@ -143,6 +146,10 @@ final class DefaultsKeySnapshotTests: XCTestCase {
         "useSurroundingTextAsContext",
         "whisperLanguage",
         "writingStyleID",
+        "xaiFormatEnabled",
+        "xaiModel",
+        "xaiTimeoutEnabled",
+        "xaiTimeoutSeconds",
     ]
 
     private var scratch: ScratchPreferences!
@@ -201,6 +208,13 @@ final class DefaultsKeySnapshotTests: XCTestCase {
             prefs.remoteFallbackModel = DictationModelOption(engine: "whisper", identifier: "/m.bin",
                                                              displayName: "m")
         }
+        assertWrites("xaiModel") { prefs.xaiModel = "grok-voice-transcribe-2.0" }
+        assertWrites("xaiFormatEnabled") { prefs.xaiFormatEnabled = false }
+        assertWrites("xaiTimeoutEnabled") { prefs.xaiTimeoutEnabled = false }
+        assertWrites("xaiTimeoutSeconds") { prefs.xaiTimeoutSeconds = 45 }
+        assertWrites("geminiModel") { prefs.geminiModel = "gemini-2.5-flash" }
+        assertWrites("geminiTimeoutEnabled") { prefs.geminiTimeoutEnabled = false }
+        assertWrites("geminiTimeoutSeconds") { prefs.geminiTimeoutSeconds = 90 }
         assertWrites("selectedWhisperModelPath") { prefs.selectedWhisperModelPath = "/m.bin" }
         assertWrites("fluidAudioModelVersion") { prefs.fluidAudioModelVersion = "v2" }
         assertWrites("whisperLanguage") { prefs.whisperLanguage = "fr" }
@@ -342,12 +356,16 @@ final class DefaultsKeySnapshotTests: XCTestCase {
     /// The Keychain-backed secrets never touch UserDefaults: a secret that leaked into the
     /// plist would be readable by anything that can read the user's preferences.
     func testSecretsWriteNoDefaultsKey() {
-        let secrets = ScratchPreferences(keychainAccounts: ["groqAPIKey", "remoteServerAPIKey", "aiRemoteAPIKey"])
+        let secrets = ScratchPreferences(keychainAccounts: [
+            "groqAPIKey", "remoteServerAPIKey", "aiRemoteAPIKey", "xaiAPIKey", "geminiAPIKey",
+        ])
         defer { secrets.restore() }
 
         prefs.groqAPIKey = "g"
         prefs.remoteServerAPIKey = "r"
         prefs.aiRemoteAPIKey = "a"
+        prefs.xaiAPIKey = "x"
+        prefs.geminiAPIKey = "m"
 
         XCTAssertEqual(scratch.writtenKeys, [])
     }
@@ -389,6 +407,13 @@ final class DefaultsKeySnapshotTests: XCTestCase {
         XCTAssertEqual(prefs.remoteFallbackEnabled, false)
         XCTAssertEqual(prefs.remoteFallbackModelData, Data())
         XCTAssertNil(prefs.remoteFallbackModel)
+        XCTAssertEqual(prefs.xaiModel, "grok-voice-transcribe-2.0")
+        XCTAssertEqual(prefs.xaiFormatEnabled, true)
+        XCTAssertEqual(prefs.xaiTimeoutEnabled, true)
+        XCTAssertEqual(prefs.xaiTimeoutSeconds, 60.0)
+        XCTAssertEqual(prefs.geminiModel, "gemini-3.5-transcribe")
+        XCTAssertEqual(prefs.geminiTimeoutEnabled, true)
+        XCTAssertEqual(prefs.geminiTimeoutSeconds, 60.0)
         XCTAssertNil(prefs.selectedWhisperModelPath)
         XCTAssertNil(prefs.selectedModelPath)
         XCTAssertEqual(prefs.fluidAudioModelVersion, "v3")
