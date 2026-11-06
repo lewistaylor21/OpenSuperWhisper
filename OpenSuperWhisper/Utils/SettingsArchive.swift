@@ -39,6 +39,7 @@ enum SettingsArchive {
         "crashReportMode",
         "debugMode",
         "dictionarySuggestionsData",
+        "didMigrateLegacyGroqToRemote",
         "didSeedAppContextPresets",
         "didSeedTerminalInsertionRules",
         "feedbackPromptDone",
@@ -87,6 +88,7 @@ enum SettingsArchive {
         "useSurroundingTextAsContext", "whisperLanguage", "writingStyleID", "customWritingStylesData",
         "appWritingStyles", "perAppDisabledBundleIDs", "appCleanupOverrides",
         // Cloud STT engines (API keys stay in Keychain — never archived)
+        "cloudGroqModel", "cloudGroqTimeoutEnabled", "cloudGroqTimeoutSeconds",
         "geminiModel", "geminiTimeoutEnabled", "geminiTimeoutSeconds",
         "xaiFormatEnabled", "xaiModel", "xaiTimeoutEnabled", "xaiTimeoutSeconds",
     ]

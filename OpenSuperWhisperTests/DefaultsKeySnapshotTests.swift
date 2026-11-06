@@ -47,6 +47,9 @@ final class DefaultsKeySnapshotTests: XCTestCase {
         "builtInModelFileName",
         "cachedRemoteModels",
         "clipboardRestoreDelayMs",
+        "cloudGroqModel",
+        "cloudGroqTimeoutEnabled",
+        "cloudGroqTimeoutSeconds",
         "contextAwareModelMode",
         "crashReportMode",
         "customDictionaryBoostEnabled",
@@ -56,6 +59,7 @@ final class DefaultsKeySnapshotTests: XCTestCase {
         "debugMode",
         "dictionaryRefusedWords",
         "dictionarySuggestionsData",
+        "didMigrateLegacyGroqToRemote",
         "didSeedAppContextPresets",
         "didSeedTerminalInsertionRules",
         "escCancelWithoutConfirmation",
@@ -215,6 +219,10 @@ final class DefaultsKeySnapshotTests: XCTestCase {
         assertWrites("geminiModel") { prefs.geminiModel = "gemini-2.5-flash" }
         assertWrites("geminiTimeoutEnabled") { prefs.geminiTimeoutEnabled = false }
         assertWrites("geminiTimeoutSeconds") { prefs.geminiTimeoutSeconds = 90 }
+        assertWrites("cloudGroqModel") { prefs.cloudGroqModel = "whisper-large-v3-turbo" }
+        assertWrites("cloudGroqTimeoutEnabled") { prefs.cloudGroqTimeoutEnabled = false }
+        assertWrites("cloudGroqTimeoutSeconds") { prefs.cloudGroqTimeoutSeconds = 30 }
+        assertWrites("didMigrateLegacyGroqToRemote") { prefs.didMigrateLegacyGroqToRemote = true }
         assertWrites("selectedWhisperModelPath") { prefs.selectedWhisperModelPath = "/m.bin" }
         assertWrites("fluidAudioModelVersion") { prefs.fluidAudioModelVersion = "v2" }
         assertWrites("whisperLanguage") { prefs.whisperLanguage = "fr" }
@@ -358,6 +366,7 @@ final class DefaultsKeySnapshotTests: XCTestCase {
     func testSecretsWriteNoDefaultsKey() {
         let secrets = ScratchPreferences(keychainAccounts: [
             "groqAPIKey", "remoteServerAPIKey", "aiRemoteAPIKey", "xaiAPIKey", "geminiAPIKey",
+            "cloudGroqAPIKey",
         ])
         defer { secrets.restore() }
 
@@ -366,6 +375,7 @@ final class DefaultsKeySnapshotTests: XCTestCase {
         prefs.aiRemoteAPIKey = "a"
         prefs.xaiAPIKey = "x"
         prefs.geminiAPIKey = "m"
+        prefs.cloudGroqAPIKey = "q"
 
         XCTAssertEqual(scratch.writtenKeys, [])
     }
@@ -414,6 +424,10 @@ final class DefaultsKeySnapshotTests: XCTestCase {
         XCTAssertEqual(prefs.geminiModel, "gemini-3.5-transcribe")
         XCTAssertEqual(prefs.geminiTimeoutEnabled, true)
         XCTAssertEqual(prefs.geminiTimeoutSeconds, 60.0)
+        XCTAssertEqual(prefs.cloudGroqModel, "whisper-large-v3-turbo")
+        XCTAssertEqual(prefs.cloudGroqTimeoutEnabled, true)
+        XCTAssertEqual(prefs.cloudGroqTimeoutSeconds, 60.0)
+        XCTAssertEqual(prefs.didMigrateLegacyGroqToRemote, false)
         XCTAssertNil(prefs.selectedWhisperModelPath)
         XCTAssertNil(prefs.selectedModelPath)
         XCTAssertEqual(prefs.fluidAudioModelVersion, "v3")

@@ -3,7 +3,7 @@ import OpenSuperWhisperCore
 
 /// The families a regeneration model can belong to, in the order the picker groups them.
 enum RegenerationModelFamily: CaseIterable {
-    case parakeet, whisper, senseVoice, appleSpeech, remote, xai, gemini
+    case parakeet, whisper, senseVoice, appleSpeech, remote, groq, xai, gemini
 }
 
 struct RegenerationModel: Equatable {
@@ -22,12 +22,14 @@ enum RegenerationModels {
         var senseVoice: [DictationModelOption] = []
         var appleSpeech: [DictationModelOption] = []
         var remote: [DictationModelOption] = []
+        var groq: [DictationModelOption] = []
         var xai: [DictationModelOption] = []
         var gemini: [DictationModelOption] = []
         /// A remote server URL is set. Without one the cached model list is a leftover.
         var remoteConfigured = false
-        /// xAI / Gemini only appear when their Keychain API key is present — otherwise a
+        /// Cloud providers only appear when their Keychain API key is present — otherwise a
         /// regeneration pick would fail immediately with missingAPIKey.
+        var groqConfigured = false
         var xaiConfigured = false
         var geminiConfigured = false
     }
@@ -42,6 +44,7 @@ enum RegenerationModels {
             (.senseVoice, candidates.senseVoice),
             (.appleSpeech, candidates.appleSpeech),
             (.remote, remote),
+            (.groq, candidates.groqConfigured ? candidates.groq : []),
             (.xai, candidates.xaiConfigured ? candidates.xai : []),
             (.gemini, candidates.geminiConfigured ? candidates.gemini : []),
         ]
@@ -58,9 +61,11 @@ enum RegenerationModels {
             senseVoice: ModelCatalog.senseVoiceModels(),
             appleSpeech: ModelCatalog.appleSpeechModels(forLanguage: prefs.whisperLanguage),
             remote: ModelCatalog.remoteModels(),
+            groq: ModelCatalog.groqModels(),
             xai: ModelCatalog.xaiModels(),
             gemini: ModelCatalog.geminiModels(),
             remoteConfigured: !prefs.remoteServerURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            groqConfigured: !(prefs.cloudGroqAPIKey ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             xaiConfigured: !(prefs.xaiAPIKey ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             geminiConfigured: !(prefs.geminiAPIKey ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         ))

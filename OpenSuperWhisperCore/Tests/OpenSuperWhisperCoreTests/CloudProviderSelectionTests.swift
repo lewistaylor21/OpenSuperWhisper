@@ -10,6 +10,7 @@ final class CloudProviderSelectionTests: CoreTestCase {
     func testEngineKindRoutesCloudIds() {
         XCTAssertEqual(TranscriptionService.engineKind(forSelectedEngine: "xai"), .xai)
         XCTAssertEqual(TranscriptionService.engineKind(forSelectedEngine: "gemini"), .gemini)
+        XCTAssertEqual(TranscriptionService.engineKind(forSelectedEngine: "groq"), .groq)
         XCTAssertEqual(TranscriptionService.engineKind(forSelectedEngine: "remote"), .remote)
         XCTAssertEqual(TranscriptionService.engineKind(forSelectedEngine: "whisper"), .whisper)
     }
@@ -57,13 +58,28 @@ final class CloudProviderSelectionTests: CoreTestCase {
     func testBuildEngineClassesMatchKinds() async {
         let xai = await TranscriptionService.buildEngine(.xai)
         let gemini = await TranscriptionService.buildEngine(.gemini)
+        let groq = await TranscriptionService.buildEngine(.groq)
         let remote = await TranscriptionService.buildEngine(.remote)
         let whisper = await TranscriptionService.buildEngine(.whisper)
 
         XCTAssertTrue(xai is XAIEngine)
         XCTAssertTrue(gemini is GeminiTranscriptionEngine)
+        XCTAssertTrue(groq is GroqEngine)
         XCTAssertTrue(remote is RemoteEngine)
         XCTAssertTrue(whisper is WhisperEngine)
+    }
+
+    func testActivateGroqDoesNotTouchOtherCloudPrefs() {
+        preferences.xaiModel = "grok-voice-transcribe-2.0"
+        preferences.geminiModel = "gemini-3.5-transcribe"
+        ModelCatalog.activate(DictationModelOption(
+            engine: "groq",
+            identifier: "whisper-large-v3-turbo",
+            displayName: "Groq Whisper Turbo"))
+        XCTAssertEqual(preferences.selectedEngine, "groq")
+        XCTAssertEqual(preferences.cloudGroqModel, "whisper-large-v3-turbo")
+        XCTAssertEqual(preferences.xaiModel, "grok-voice-transcribe-2.0")
+        XCTAssertEqual(preferences.geminiModel, "gemini-3.5-transcribe")
     }
 
     func testRemoteFallbackGateIgnoresCloudEngines() {

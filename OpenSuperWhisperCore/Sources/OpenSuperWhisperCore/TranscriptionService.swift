@@ -131,7 +131,7 @@ public class TranscriptionService: ObservableObject {
     /// The engines `ensureEngineLoaded` can build. Named apart from the classes so the choice can
     /// be made, and tested, without instantiating anything (an engine's init may load a model).
     enum EngineKind: Equatable {
-        case whisper, fluidAudio, senseVoice, remote, appleSpeech, xai, gemini
+        case whisper, fluidAudio, senseVoice, remote, appleSpeech, xai, gemini, groq
     }
 
     /// Which engine a stored `selectedEngine` id gets. Every id the app does not know lands on
@@ -158,6 +158,8 @@ public class TranscriptionService: ObservableObject {
             return .xai
         case "gemini":
             return .gemini
+        case "groq":
+            return .groq
         case "apple":
             // A pref synced from a newer machine; the catalog never offers "apple" there, so
             // quietly fall back.
@@ -186,6 +188,8 @@ public class TranscriptionService: ObservableObject {
             return XAIEngine()
         case .gemini:
             return GeminiTranscriptionEngine()
+        case .groq:
+            return GroqEngine()
         case .appleSpeech:
 #if canImport(FoundationModels)
             if #available(macOS 26.0, iOS 26.0, *) {
@@ -255,6 +259,7 @@ public class TranscriptionService: ObservableObject {
 
         let previousXAI = prefs.xaiModel
         let previousGemini = prefs.geminiModel
+        let previousGroq = prefs.cloudGroqModel
 
         prefs.selectedEngine = option.engine
         switch option.engine {
@@ -263,6 +268,7 @@ public class TranscriptionService: ObservableObject {
         case "remote": prefs.remoteServerModel = option.identifier
         case "xai": prefs.xaiModel = option.identifier
         case "gemini": prefs.geminiModel = option.identifier
+        case "groq": prefs.cloudGroqModel = option.identifier
         default: break
         }
         reloadEngine()
@@ -274,6 +280,7 @@ public class TranscriptionService: ObservableObject {
             prefs.remoteServerModel = previousRemote
             prefs.xaiModel = previousXAI
             prefs.geminiModel = previousGemini
+            prefs.cloudGroqModel = previousGroq
             self.reloadEngine()
         }
     }
@@ -415,6 +422,13 @@ public class TranscriptionService: ObservableObject {
             }
         } else if let geminiEngine = engine as? GeminiTranscriptionEngine {
             geminiEngine.onProgressUpdate = { [weak self] newProgress in
+                Task { @MainActor in
+                    guard let self = self, !self.isCancelled else { return }
+                    self.progress = newProgress
+                }
+            }
+        } else if let groqEngine = engine as? GroqEngine {
+            groqEngine.onProgressUpdate = { [weak self] newProgress in
                 Task { @MainActor in
                     guard let self = self, !self.isCancelled else { return }
                     self.progress = newProgress

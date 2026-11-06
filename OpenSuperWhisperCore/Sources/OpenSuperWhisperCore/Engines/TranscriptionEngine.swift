@@ -60,7 +60,7 @@ public enum EngineCapabilities {
     /// Whisper set; "auto" (where present) means let the model detect the language.
     public static func supportedLanguages(engine: String, fluidAudioModelVersion: String) -> [String] {
         switch engine {
-        case "remote", "xai", "gemini":
+        case "remote", "xai", "gemini", "groq":
             // Cloud backends decide language support; advertise the full Whisper set
             // (incl. "auto") so the user's choice is forwarded when the API accepts it.
             return LanguageUtil.availableLanguages

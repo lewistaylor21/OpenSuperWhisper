@@ -81,6 +81,16 @@ public enum ModelCatalog {
         return [DictationModelOption(engine: "gemini", identifier: id, displayName: name)]
     }
 
+    /// First-party Groq Whisper (api.groq.com) — default whisper-large-v3-turbo.
+    public static func groqModels() -> [DictationModelOption] {
+        let id = {
+            let configured = CoreAccess.preferences.cloudGroqModel
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return configured.isEmpty ? GroqEngine.defaultModel : configured
+        }()
+        return [DictationModelOption(engine: "groq", identifier: id, displayName: "Groq Whisper Turbo")]
+    }
+
     /// The system speech model (macOS 26+) — one entry, only when the OS supports it
     /// AND at least one locale's assets are already installed (the cached check keeps
     /// the never-download-from-the-menu rule).
@@ -101,7 +111,7 @@ public enum ModelCatalog {
     /// even meaningful (one model → nothing to choose).
     public static func allAvailable() -> [DictationModelOption] {
         whisperModels() + parakeetModels() + senseVoiceModels() + appleSpeechModels()
-            + remoteModels() + xaiModels() + geminiModels()
+            + remoteModels() + xaiModels() + geminiModels() + groqModels()
     }
 
     /// The model currently in effect (active engine + its selected model).
@@ -134,6 +144,8 @@ public enum ModelCatalog {
             return xaiModels().first
         case "gemini":
             return geminiModels().first
+        case "groq":
+            return groqModels().first
         default:
             return nil
         }
@@ -155,6 +167,8 @@ public enum ModelCatalog {
             prefs.xaiModel = option.identifier
         case "gemini":
             prefs.geminiModel = option.identifier
+        case "groq":
+            prefs.cloudGroqModel = option.identifier
         case "sensevoice", "apple":
             break  // single model, nothing else to set
         default:

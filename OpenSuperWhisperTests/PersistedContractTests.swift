@@ -74,7 +74,7 @@ final class PersistedContractTests: XCTestCase {
         let presetID = UUID(uuidString: "6F1C2B3A-0000-4000-8000-000000000001")!
         let presetAccount = "remotePreset.6F1C2B3A-0000-4000-8000-000000000001"
         let accounts = ["groqAPIKey", "remoteServerAPIKey", "aiRemoteAPIKey", "xaiAPIKey",
-                        "geminiAPIKey", presetAccount]
+                        "geminiAPIKey", "cloudGroqAPIKey", presetAccount]
         let scratch = ScratchPreferences(keychainAccounts: accounts)
         defer { scratch.restore() }
         let prefs = AppPreferences.shared
@@ -84,11 +84,13 @@ final class PersistedContractTests: XCTestCase {
         prefs.aiRemoteAPIKey = "cleanup-secret"
         prefs.xaiAPIKey = "xai-secret"
         prefs.geminiAPIKey = "gemini-secret"
+        prefs.cloudGroqAPIKey = "cloud-groq-secret"
         RemoteUserPresets.setAPIKey("preset-secret", for: presetID)
 
         let expected = [("groqAPIKey", "groq-secret"), ("remoteServerAPIKey", "remote-secret"),
                         ("aiRemoteAPIKey", "cleanup-secret"), ("xaiAPIKey", "xai-secret"),
-                        ("geminiAPIKey", "gemini-secret"), (presetAccount, "preset-secret")]
+                        ("geminiAPIKey", "gemini-secret"), ("cloudGroqAPIKey", "cloud-groq-secret"),
+                        (presetAccount, "preset-secret")]
         for (account, value) in expected {
             let item = try XCTUnwrap(Self.keychainItem(account: account), account)
             XCTAssertEqual((item[kSecValueData as String] as? Data).flatMap { String(data: $0, encoding: .utf8) },

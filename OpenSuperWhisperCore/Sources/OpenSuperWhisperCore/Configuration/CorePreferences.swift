@@ -40,6 +40,12 @@ public protocol CorePreferences: AnyObject, Sendable {
     var geminiTimeoutEnabled: Bool { get }
     var geminiTimeoutSeconds: Double { get }
 
+    // First-party Groq cloud STT (api.groq.com OpenAI-compatible transcriptions)
+    var cloudGroqAPIKey: String? { get }
+    var cloudGroqModel: String { get set }
+    var cloudGroqTimeoutEnabled: Bool { get }
+    var cloudGroqTimeoutSeconds: Double { get }
+
     // History and retention
     var saveTranscriptionHistory: Bool { get set }
     var retentionMaxCountEnabled: Bool { get }

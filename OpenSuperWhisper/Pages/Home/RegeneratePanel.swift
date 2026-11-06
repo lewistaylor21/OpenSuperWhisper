@@ -105,6 +105,7 @@ struct RegeneratePanel: View {
             case .senseVoice: Text(verbatim: "SenseVoice")
             case .appleSpeech: Text(verbatim: "Apple Speech")
             case .remote: Text("Server")
+            case .groq: Text(verbatim: "Groq")
             case .xai: Text(verbatim: "Grok")
             case .gemini: Text(verbatim: "Gemini")
             }

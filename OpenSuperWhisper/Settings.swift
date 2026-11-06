@@ -186,6 +186,40 @@ class SettingsViewModel: ObservableObject {
         }
     }
 
+    // MARK: - First-party Groq (groq.com)
+
+    @Published var cloudGroqAPIKey: String {
+        didSet {
+            AppPreferences.shared.cloudGroqAPIKey = cloudGroqAPIKey
+            reloadCloudEngineIfSelected("groq")
+        }
+    }
+
+    @Published var cloudGroqModel: String {
+        didSet {
+            guard !isSyncing else { return }
+            AppPreferences.shared.cloudGroqModel = cloudGroqModel
+            reloadCloudEngineIfSelected("groq")
+            if selectedEngine == "groq" {
+                MainActor.assumeIsolated { ModelSelectionStore.shared.refresh() }
+            }
+        }
+    }
+
+    @Published var cloudGroqTimeoutEnabled: Bool {
+        didSet {
+            AppPreferences.shared.cloudGroqTimeoutEnabled = cloudGroqTimeoutEnabled
+            reloadCloudEngineIfSelected("groq")
+        }
+    }
+
+    @Published var cloudGroqTimeoutSeconds: Double {
+        didSet {
+            AppPreferences.shared.cloudGroqTimeoutSeconds = cloudGroqTimeoutSeconds
+            reloadCloudEngineIfSelected("groq")
+        }
+    }
+
     private func reloadCloudEngineIfSelected(_ engine: String) {
         guard selectedEngine == engine else { return }
         Task { @MainActor in
@@ -253,6 +287,13 @@ class SettingsViewModel: ObservableObject {
             let name = id.lowercased().contains("transcribe") ? "Gemini Transcribe" : id
             ModelSelectionStore.shared.select(DictationModelOption(
                 engine: "gemini", identifier: id, displayName: name))
+        }
+    }
+
+    func selectGroq(_ id: String) {
+        MainActor.assumeIsolated {
+            ModelSelectionStore.shared.select(DictationModelOption(
+                engine: "groq", identifier: id, displayName: "Groq Whisper Turbo"))
         }
     }
 
@@ -1168,6 +1209,10 @@ class SettingsViewModel: ObservableObject {
         self.geminiModel = prefs.geminiModel
         self.geminiTimeoutEnabled = prefs.geminiTimeoutEnabled
         self.geminiTimeoutSeconds = prefs.geminiTimeoutSeconds
+        self.cloudGroqAPIKey = prefs.cloudGroqAPIKey ?? ""
+        self.cloudGroqModel = prefs.cloudGroqModel
+        self.cloudGroqTimeoutEnabled = prefs.cloudGroqTimeoutEnabled
+        self.cloudGroqTimeoutSeconds = prefs.cloudGroqTimeoutSeconds
         self.contextAwareModelMode = prefs.contextAwareModelMode
         self.selectedLanguage = prefs.whisperLanguage
         self.translateToEnglish = prefs.translateToEnglish
@@ -1317,6 +1362,7 @@ class SettingsViewModel: ObservableObject {
             || remoteServerModel != prefs.remoteServerModel
             || xaiModel != prefs.xaiModel
             || geminiModel != prefs.geminiModel
+            || cloudGroqModel != prefs.cloudGroqModel
             || selectedModelURL != newURL else { return }
 
         isSyncing = true
@@ -1325,6 +1371,7 @@ class SettingsViewModel: ObservableObject {
         remoteServerModel = prefs.remoteServerModel
         xaiModel = prefs.xaiModel
         geminiModel = prefs.geminiModel
+        cloudGroqModel = prefs.cloudGroqModel
         selectedModelURL = newURL
         isSyncing = false
 

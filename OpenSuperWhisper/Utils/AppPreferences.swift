@@ -125,12 +125,18 @@ final class AppPreferences {
         }
     }
 
-    /// The standalone Groq engine was folded into the generic remote (OpenAI-compatible)
-    /// engine: Groq is now just a preset that points the remote engine at Groq's API. Migrate
-    /// existing Groq users once so their engine keeps working with no re-entry — seed the remote
-    /// config from their stored Groq URL/model/key and flip `selectedEngine` from "groq" to
-    /// "remote". Idempotent: only runs while `selectedEngine` is still "groq".
+    /// One-shot: the pre-Remote standalone Groq engine id (`selectedEngine == "groq"`) was
+    /// folded into Remote. After that migration ran, `"groq"` is again a real first-party
+    /// cloud engine id (Groq Whisper via api.groq.com) — so this must not re-run every launch.
+    @UserDefault(key: "didMigrateLegacyGroqToRemote", defaultValue: false)
+    var didMigrateLegacyGroqToRemote: Bool
+
+    /// Migrate existing Groq users once so their engine keeps working with no re-entry — seed
+    /// the remote config from their stored Groq URL/model/key and flip `selectedEngine` from
+    /// "groq" to "remote". After the flag is set, `"groq"` means the first-party Groq cloud card.
     private func migrateGroqToRemote() {
+        if didMigrateLegacyGroqToRemote { return }
+        defer { didMigrateLegacyGroqToRemote = true }
         guard selectedEngine == "groq" else { return }
         if remoteServerURL.isEmpty {
             remoteServerURL = "https://api.groq.com/openai/v1"
@@ -299,6 +305,25 @@ final class AppPreferences {
 
     @UserDefault(key: "geminiTimeoutSeconds", defaultValue: 60.0)
     var geminiTimeoutSeconds: Double
+
+    // MARK: - First-party Groq cloud STT (api.groq.com)
+    // OpenAI-compatible `/audio/transcriptions`, default `whisper-large-v3-turbo`.
+    // Keychain account is `cloudGroqAPIKey` — separate from legacy `groqAPIKey` and from
+    // `remoteServerAPIKey` (generic Remote / Server card).
+
+    var cloudGroqAPIKey: String? {
+        get { Keychain.read("cloudGroqAPIKey") }
+        set { Keychain.set(newValue, for: "cloudGroqAPIKey") }
+    }
+
+    @UserDefault(key: "cloudGroqModel", defaultValue: "whisper-large-v3-turbo")
+    var cloudGroqModel: String
+
+    @UserDefault(key: "cloudGroqTimeoutEnabled", defaultValue: true)
+    var cloudGroqTimeoutEnabled: Bool
+
+    @UserDefault(key: "cloudGroqTimeoutSeconds", defaultValue: 60.0)
+    var cloudGroqTimeoutSeconds: Double
 
     // Model settings
     var selectedModelPath: String? {

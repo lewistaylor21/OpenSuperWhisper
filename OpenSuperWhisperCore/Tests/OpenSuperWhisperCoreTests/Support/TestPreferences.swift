@@ -40,6 +40,11 @@ final class TestPreferences: CorePreferences, @unchecked Sendable {
         var geminiTimeoutEnabled = true
         var geminiTimeoutSeconds: Double = 60
 
+        var cloudGroqAPIKey: String?
+        var cloudGroqModel = GroqEngine.defaultModel
+        var cloudGroqTimeoutEnabled = true
+        var cloudGroqTimeoutSeconds: Double = 60
+
         var saveTranscriptionHistory = true
         var retentionMaxCountEnabled = false
         var retentionMaxCount = 100
@@ -179,6 +184,23 @@ final class TestPreferences: CorePreferences, @unchecked Sendable {
     var geminiTimeoutSeconds: Double {
         get { self[\.geminiTimeoutSeconds] }
         set { self[\.geminiTimeoutSeconds] = newValue }
+    }
+
+    var cloudGroqAPIKey: String? {
+        get { self[\.cloudGroqAPIKey] }
+        set { self[\.cloudGroqAPIKey] = newValue }
+    }
+    var cloudGroqModel: String {
+        get { self[\.cloudGroqModel] }
+        set { self[\.cloudGroqModel] = newValue }
+    }
+    var cloudGroqTimeoutEnabled: Bool {
+        get { self[\.cloudGroqTimeoutEnabled] }
+        set { self[\.cloudGroqTimeoutEnabled] = newValue }
+    }
+    var cloudGroqTimeoutSeconds: Double {
+        get { self[\.cloudGroqTimeoutSeconds] }
+        set { self[\.cloudGroqTimeoutSeconds] = newValue }
     }
 
     var saveTranscriptionHistory: Bool {

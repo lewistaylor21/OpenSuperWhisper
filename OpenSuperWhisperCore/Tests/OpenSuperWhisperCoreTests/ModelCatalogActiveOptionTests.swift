@@ -53,6 +53,11 @@ final class ModelCatalogActiveOptionTests: CoreTestCase {
         prefs.geminiModel = "gemini-2.5-flash"
         XCTAssertEqual(ModelCatalog.activeOption()?.engine, "gemini")
         XCTAssertEqual(ModelCatalog.activeOption()?.identifier, "gemini-2.5-flash")
+
+        prefs.selectedEngine = "groq"
+        prefs.cloudGroqModel = "whisper-large-v3-turbo"
+        XCTAssertEqual(ModelCatalog.activeOption()?.engine, "groq")
+        XCTAssertEqual(ModelCatalog.activeOption()?.identifier, "whisper-large-v3-turbo")
     }
 
     func testARemoteServerWithoutAModelHasNoOption() {
@@ -62,7 +67,7 @@ final class ModelCatalogActiveOptionTests: CoreTestCase {
     }
 
     func testAnUnknownEngineHasNoOption() {
-        prefs.selectedEngine = "groq"
+        prefs.selectedEngine = "legacy-unknown-engine"
         XCTAssertNil(ModelCatalog.activeOption())
     }
 }

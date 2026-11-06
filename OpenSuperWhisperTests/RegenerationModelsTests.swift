@@ -39,33 +39,39 @@ final class RegenerationModelsTests: XCTestCase {
             senseVoice: [option("sensevoice", "default")],
             appleSpeech: [option("apple", "default")],
             remote: [option("remote", "whisper-1")],
+            groq: [option("groq", "whisper-large-v3-turbo")],
             xai: [option("xai", "grok-voice-transcribe-2.0")],
             gemini: [option("gemini", "gemini-3.5-transcribe")],
             remoteConfigured: true,
+            groqConfigured: true,
             xaiConfigured: true,
             geminiConfigured: true))
 
         XCTAssertEqual(models.map(\.family),
-                       [.parakeet, .whisper, .whisper, .senseVoice, .appleSpeech, .remote, .xai, .gemini])
+                       [.parakeet, .whisper, .whisper, .senseVoice, .appleSpeech, .remote, .groq, .xai, .gemini])
         XCTAssertEqual(models.map(\.option.identifier),
                        ["v3", "/models/ggml-base.bin", "/models/ggml-small.bin", "default", "default",
-                        "whisper-1", "grok-voice-transcribe-2.0", "gemini-3.5-transcribe"])
+                        "whisper-1", "whisper-large-v3-turbo", "grok-voice-transcribe-2.0", "gemini-3.5-transcribe"])
     }
 
     func testCloudFamiliesRequireConfiguredKeys() {
         let withoutKeys = RegenerationModels.usable(.init(
+            groq: [option("groq", "whisper-large-v3-turbo")],
             xai: [option("xai", "grok-voice-transcribe-2.0")],
             gemini: [option("gemini", "gemini-3.5-transcribe")],
+            groqConfigured: false,
             xaiConfigured: false,
             geminiConfigured: false))
         XCTAssertTrue(withoutKeys.isEmpty)
 
         let withKeys = RegenerationModels.usable(.init(
+            groq: [option("groq", "whisper-large-v3-turbo")],
             xai: [option("xai", "grok-voice-transcribe-2.0")],
             gemini: [option("gemini", "gemini-3.5-transcribe")],
+            groqConfigured: true,
             xaiConfigured: true,
             geminiConfigured: true))
-        XCTAssertEqual(withKeys.map(\.family), [.xai, .gemini])
+        XCTAssertEqual(withKeys.map(\.family), [.groq, .xai, .gemini])
     }
 
     func testAppleSpeechNeedsItsAssetsForTheLanguage() {

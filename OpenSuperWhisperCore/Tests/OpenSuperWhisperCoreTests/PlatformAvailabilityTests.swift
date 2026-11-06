@@ -62,6 +62,8 @@ final class PlatformAvailabilityTests: CoreTestCase {
         XCTAssertTrue(xai is XAIEngine)
         let gemini = await TranscriptionService.buildEngine(.gemini)
         XCTAssertTrue(gemini is GeminiTranscriptionEngine)
+        let groq = await TranscriptionService.buildEngine(.groq)
+        XCTAssertTrue(groq is GroqEngine)
 #if os(macOS) && arch(arm64)
         let senseVoice = await TranscriptionService.buildEngine(.senseVoice)
         XCTAssertTrue(senseVoice is SenseVoiceEngine)

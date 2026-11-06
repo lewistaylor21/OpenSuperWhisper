@@ -13,7 +13,7 @@ import XCTest
 /// are literals, never the result of calling the migration helpers again.
 final class AppPreferencesMigrationTests: XCTestCase {
 
-    private static let secretAccounts = ["groqAPIKey", "remoteServerAPIKey"]
+    private static let secretAccounts = ["groqAPIKey", "remoteServerAPIKey", "cloudGroqAPIKey"]
 
     private var scratch: ScratchPreferences!
     private let prefs = AppPreferences.shared
@@ -47,11 +47,26 @@ final class AppPreferencesMigrationTests: XCTestCase {
         prefs.runMigrations()
 
         XCTAssertEqual(scratch.writtenKeys,
-                       ["appContextProfilesData", "appInsertionRulesData", "didSeedAppContextPresets",
+                       ["appContextProfilesData", "appInsertionRulesData",
+                        "didMigrateLegacyGroqToRemote", "didSeedAppContextPresets",
                         "didSeedTerminalInsertionRules", "indicatorLayout", "offeredAppContextPresets",
                         "perAppDisabledBundleIDs", "recordingTriggers"])
         XCTAssertEqual(prefs.selectedEngine, "whisper")
+        XCTAssertTrue(prefs.didMigrateLegacyGroqToRemote)
         XCTAssertNil(defaults.object(forKey: "aiBackend"))
+    }
+
+    /// After the one-shot legacy migration, `"groq"` is the first-party Groq cloud engine again.
+    func testFirstPartyGroqSelectionIsNotRewrittenToRemote() {
+        prefs.runMigrations() // sets didMigrateLegacyGroqToRemote
+        XCTAssertTrue(prefs.didMigrateLegacyGroqToRemote)
+
+        prefs.selectedEngine = "groq"
+        prefs.cloudGroqAPIKey = "gsk-cloud"
+        prefs.runMigrations()
+
+        XCTAssertEqual(prefs.selectedEngine, "groq")
+        XCTAssertEqual(prefs.remoteServerURL, "", "must not seed Remote from first-party Groq")
     }
 
     /// The store's contents with JSON values parsed, since JSONEncoder does not keep key order

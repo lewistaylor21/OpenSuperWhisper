@@ -33,6 +33,8 @@ struct ModelsRubric: View {
               keywords: "xai grok cloud speech voice transcribe"),
         .init(title: "Gemini", rubric: .models,
               keywords: "google gemini generatecontent cloud speech transcribe flash"),
+        .init(title: "Groq", rubric: .models,
+              keywords: "groq whisper turbo cloud speech transcription gsk"),
         .init(title: "Free memory when idle", rubric: .models, advanced: true,
               keywords: "unload memory ram idle libérer mémoire décharger"),
         .init(title: "Models folder", rubric: .models, advanced: true,
@@ -44,7 +46,7 @@ struct ModelsRubric: View {
     ]
 
     var body: some View {
-        RubricPage(.models, intro: "The model that turns your voice into text. On-device by default; cloud engines (Server, Grok, Gemini) only run when you select them.") {
+        RubricPage(.models, intro: "The model that turns your voice into text. On-device by default; cloud engines (Server, Groq, Grok/xAI, Gemini) only run when you select them.") {
             engineSection
             engineContent
             onThisMacGroup
@@ -64,6 +66,8 @@ struct ModelsRubric: View {
             browseEngine = "xai"
         } else if row == "Gemini" {
             browseEngine = "gemini"
+        } else if row == "Groq" {
+            browseEngine = "groq"
         } else if ["Show all variants", "Import a model"].contains(row) {
             browseEngine = "whisper"
         } else if row == "Models folder", modelsFolder == nil {
@@ -92,8 +96,9 @@ struct ModelsRubric: View {
             list.append(Engine(tag: "apple", name: "Apple", blurb: "Built into macOS"))
         }
         list.append(Engine(tag: "remote", name: "Server", blurb: "Your own server"))
+        list.append(Engine(tag: "groq", name: "Groq", blurb: "Whisper Turbo · $0.04/hr"))
         list.append(Engine(tag: "xai", name: "Grok", blurb: "xAI cloud STT · paid API"))
-        list.append(Engine(tag: "gemini", name: "Gemini", blurb: "Google cloud · token-billed"))
+        list.append(Engine(tag: "gemini", name: "Gemini", blurb: "Google Transcribe · tokens"))
         return list
     }
 
@@ -197,6 +202,8 @@ struct ModelsRubric: View {
             XAISettingsSection(viewModel: viewModel)
         case "gemini":
             GeminiSettingsSection(viewModel: viewModel)
+        case "groq":
+            GroqSettingsSection(viewModel: viewModel)
         default:
             EmptyView()
         }
@@ -223,7 +230,7 @@ struct ModelsRubric: View {
     }
 
     @ViewBuilder private var onThisMacGroup: some View {
-        if browseEngine != "remote" && browseEngine != "xai" && browseEngine != "gemini" {
+        if browseEngine != "remote" && browseEngine != "xai" && browseEngine != "gemini" && browseEngine != "groq" {
             SettingsGroup("On this Mac", advanced: true) {
                 SettingRow("Free memory when idle",
                            hint: "Unloads the Whisper model (about 1 GB) between dictations and reloads it when you dictate. Saves memory, adds a little delay at the start.",

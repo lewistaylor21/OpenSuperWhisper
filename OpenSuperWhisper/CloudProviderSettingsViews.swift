@@ -1,9 +1,9 @@
 import SwiftUI
 import OpenSuperWhisperCore
 
-/// Settings panels for the first-party cloud STT engines (xAI Grok, Gemini).
-/// Kept separate from Remote (OpenAI-compatible servers): different endpoints, auth,
-/// and billing. Selecting one never silently sends audio to the other.
+/// Settings panels for the first-party cloud STT engines (**Groq**, **Grok/xAI**, **Gemini**).
+/// Kept separate from Remote (any custom OpenAI-compatible server): different endpoints, auth,
+/// and billing. Selecting one never silently sends audio to another provider.
 
 // MARK: - Grok (xAI)
 
@@ -13,8 +13,8 @@ struct XAISettingsSection: View {
 
     var body: some View {
         SPaneStack(spacing: 26) {
-            SettingsGroup("Grok Voice Transcribe") {
-                SettingNotice("Audio is uploaded to xAI (api.x.ai). Speech-to-text usage is billed by xAI separately — a SuperGrok subscription is not API credit. This free app does not include cloud minutes.")
+            SettingsGroup("Grok (xAI) — not Groq") {
+                SettingNotice("Audio is uploaded to xAI (api.x.ai /v1/stt), not Groq. Speech-to-text is billed by xAI separately (~$0.10/audio-hour REST per xAI pricing research) — a SuperGrok subscription is not API credit. This free app does not include cloud minutes.")
                 SettingRow("API key", hint: "Personal xAI API key. Stored in your Keychain, never in settings backups.") {
                     HStack(spacing: 12) {
                         apiKeyField
@@ -85,8 +85,8 @@ struct GeminiSettingsSection: View {
     var body: some View {
         SPaneStack(spacing: 26) {
             SettingsGroup("Gemini") {
-                SettingNotice("Audio is uploaded to Google's Gemini API (generativelanguage.googleapis.com) via generateContent — not Google Cloud Speech-to-Text. Billing is token-based (input and output); this app does not promise a fixed per-minute price.")
-                SettingRow("API key", hint: "Google AI Studio key. Stored in your Keychain, separate from xAI and Remote keys.") {
+                SettingNotice("Audio is uploaded to Google's Gemini API using the dedicated speech-to-text model gemini-3.5-transcribe (generateContent) — not Google Cloud Speech-to-Text. Token-billed (~$2/M audio in + $12/M text out; ~25 audio tokens/sec). Free-tier prompts/audio may be used to improve Google products; paid tier is not. This free app includes no API credit.")
+                SettingRow("API key", hint: "Google AI Studio key. Stored in your Keychain, separate from Groq, Grok/xAI, and Remote keys.") {
                     HStack(spacing: 12) {
                         apiKeyField
                         Link("Get a key", destination: URL(string: "https://aistudio.google.com/apikey")!)
@@ -94,7 +94,7 @@ struct GeminiSettingsSection: View {
                     }
                 }
                 SettingRow("Model",
-                           hint: "Default gemini-3.5-transcribe (dedicated STT). You can set gemini-2.5-flash for multimodal audio understanding.") {
+                           hint: "Prefer gemini-3.5-transcribe (official dedicated STT). Other ids are advanced; multimodal Flash is not the recommended transcription product.") {
                     TextField("gemini-3.5-transcribe", text: $viewModel.geminiModel)
                         .textFieldStyle(.plain)
                         .scaledFont(size: 13, design: .monospaced)
@@ -130,6 +130,73 @@ struct GeminiSettingsSection: View {
                 TextField("AIza…", text: $viewModel.geminiAPIKey)
             } else {
                 SecureField("AIza…", text: $viewModel.geminiAPIKey)
+            }
+        }
+        .textFieldStyle(.plain)
+        .scaledFont(size: 13, design: .monospaced)
+        .foregroundColor(STheme.textBright)
+        .padding(.horizontal, 10).padding(.vertical, 7)
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(STheme.inputBg))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(STheme.border, lineWidth: 1))
+        .frame(maxWidth: 280)
+        Button(revealKey ? "Hide" : "Show") { revealKey.toggle() }
+            .buttonStyle(.sSecondary)
+    }
+}
+
+// MARK: - Groq (groq.com — not Grok/xAI)
+
+struct GroqSettingsSection: View {
+    @ObservedObject var viewModel: SettingsViewModel
+    @State private var revealKey = false
+
+    var body: some View {
+        SPaneStack(spacing: 26) {
+            SettingsGroup("Groq — not Grok (xAI)") {
+                SettingNotice("Audio is uploaded to Groq (api.groq.com/openai/v1/audio/transcriptions) using Whisper Large v3 Turbo. Published rate $0.04/audio-hour; requests under 10 seconds are still billed as 10 seconds. Separate from Grok/xAI and Gemini. This free app includes no API credit.")
+                SettingRow("API key", hint: "Groq Cloud API key. Stored in your Keychain, separate from Grok/xAI, Gemini, and Remote.") {
+                    HStack(spacing: 12) {
+                        apiKeyField
+                        Link("Get a key", destination: URL(string: "https://console.groq.com/keys")!)
+                            .scaledFont(size: 12)
+                    }
+                }
+                SettingRow("Model", hint: "Official default: whisper-large-v3-turbo (transcription only; no translate endpoint on turbo).") {
+                    TextField("whisper-large-v3-turbo", text: $viewModel.cloudGroqModel)
+                        .textFieldStyle(.plain)
+                        .scaledFont(size: 13, design: .monospaced)
+                        .foregroundColor(STheme.textBright)
+                        .padding(.horizontal, 10).padding(.vertical, 7)
+                        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(STheme.inputBg))
+                        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(STheme.border, lineWidth: 1))
+                        .frame(maxWidth: 320)
+                }
+                SettingRow("Use Groq") {
+                    Button("Use for dictation") {
+                        let model = viewModel.cloudGroqModel.trimmingCharacters(in: .whitespacesAndNewlines)
+                        viewModel.selectGroq(model.isEmpty ? "whisper-large-v3-turbo" : model)
+                    }
+                    .buttonStyle(.sPrimary)
+                    .disabled(viewModel.cloudGroqAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+
+            SettingsGroup("Reliability") {
+                timeoutRow(
+                    enabled: $viewModel.cloudGroqTimeoutEnabled,
+                    seconds: $viewModel.cloudGroqTimeoutSeconds
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder private var apiKeyField: some View {
+        Group {
+            if revealKey {
+                TextField("gsk_…", text: $viewModel.cloudGroqAPIKey)
+            } else {
+                SecureField("gsk_…", text: $viewModel.cloudGroqAPIKey)
             }
         }
         .textFieldStyle(.plain)
